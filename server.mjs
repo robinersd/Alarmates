@@ -344,43 +344,50 @@ server.listen(PORT, () => {
   console.log(`  Local:   http://localhost:${PORT}`);
   console.log(`  Network: http://${lanIp}:${PORT}`);
 
-  // Keep stdin as 'pipe' so Windows OpenSSH never receives EOF and keeps the HTTPS tunnel alive!
-  function startPublicPhoneTunnel() {
-    try {
-      const sshProc = spawn(
-        "ssh.exe",
-        [
-          "-T",
-          "-o", "StrictHostKeyChecking=no",
-          "-o", "ServerAliveInterval=20",
-          "-o", "ExitOnForwardFailure=yes",
-          "-R", `80:127.0.0.1:${PORT}`,
-          "nokey@localhost.run"
-        ],
-        { stdio: ["pipe", "pipe", "pipe"] }
-      );
-      const handleChunk = (chunk) => {
-        const text = chunk.toString("utf8");
-        const match = text.match(/https:\/\/[a-z0-9-]+\.lhr\.life/i);
-        if (match && match[0]) {
-          const pubUrl = match[0].trim();
-          if (db.publicTunnelUrl !== pubUrl) {
-            db.publicTunnelUrl = pubUrl;
-            saveDb(db);
-            broadcastStats();
-            console.log(`  Public Phone Link (Works Anywhere!): ${pubUrl}`);
-            console.log(`  Public Phone Auto-Download QR URL:   ${pubUrl}/qr`);
+  // Skip local SSH tunnel when running in cloud environments (Render, Vercel, Railway)
+  const isCloud = Boolean(process.env.RENDER || process.env.VERCEL || process.env.NODE_ENV === "production");
+  if (!isCloud) {
+    const sshBin = process.platform === "win32" ? "ssh.exe" : "ssh";
+    function startPublicPhoneTunnel() {
+      try {
+        const sshProc = spawn(
+          sshBin,
+          [
+            "-T",
+            "-o", "StrictHostKeyChecking=no",
+            "-o", "ServerAliveInterval=20",
+            "-o", "ExitOnForwardFailure=yes",
+            "-R", `80:127.0.0.1:${PORT}`,
+            "nokey@localhost.run"
+          ],
+          { stdio: ["pipe", "pipe", "pipe"] }
+        );
+        sshProc.on("error", (err) => {
+          console.warn("Local tunnel not available:", err.message);
+        });
+        const handleChunk = (chunk) => {
+          const text = chunk.toString("utf8");
+          const match = text.match(/https:\/\/[a-z0-9-]+\.lhr\.life/i);
+          if (match && match[0]) {
+            const pubUrl = match[0].trim();
+            if (db.publicTunnelUrl !== pubUrl) {
+              db.publicTunnelUrl = pubUrl;
+              saveDb(db);
+              broadcastStats();
+              console.log(`  Public Phone Link (Works Anywhere!): ${pubUrl}`);
+              console.log(`  Public Phone Auto-Download QR URL:   ${pubUrl}/qr`);
+            }
           }
-        }
-      };
-      sshProc.stdout.on("data", handleChunk);
-      sshProc.stderr.on("data", handleChunk);
-      sshProc.on("exit", () => {
-        setTimeout(startPublicPhoneTunnel, 3000);
-      });
-    } catch (e) {
-      console.error("Tunnel error:", e);
+        };
+        sshProc.stdout.on("data", handleChunk);
+        sshProc.stderr.on("data", handleChunk);
+        sshProc.on("exit", () => {
+          setTimeout(startPublicPhoneTunnel, 5000);
+        });
+      } catch (e) {
+        console.warn("Tunnel error:", e.message);
+      }
     }
+    startPublicPhoneTunnel();
   }
-  startPublicPhoneTunnel();
 });
