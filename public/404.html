@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    try {
+      document.querySelector('meta[name="color-scheme"]').content = localStorage.getItem("color-scheme") ?? "dark";
+    } catch (e) {}
+  </script>
+  <title>Page Not Found | AlarmMates</title>
+  <link rel="icon" type="image/png" href="/assets/logo.png">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="section-block" style="min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+    <div class="container" style="max-width: 540px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: var(--sp-300);">
+      <img src="/assets/stickers/boy_pose_2_shocked_open.png" alt="Chibi Tristan shocked" width="128" height="128">
+      <span class="badge-pill caption-3" style="color: var(--brand-primary);">404 · ALARM RINGING IN AN EMPTY ROOM</span>
+      <h1 class="heading-2">This page overslept and could not be found</h1>
+      <p class="body-2" style="color: var(--text-secondary);">
+        The link you followed does not exist. Head back to the AlarmMates homepage to scan the APK QR code or explore the 11 wake up missions.
+      </p>
+      <a href="/" class="btn btn-primary btn-lg-pad button-md">Return to AlarmMates Home</a>
+    </div>
+  </main>
+</body>
+</html>

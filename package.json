@@ -1,0 +1,10 @@
+{
+  "name": "alarmmates-official-website",
+  "version": "1.0.0",
+  "description": "Official 3D Motion & Real-Time APK Download Website for AlarmMates by Tristan",
+  "type": "module",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs"
+  }
+}

@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment and Data
+data/
+*.log
+
+# OS & Temp
+.DS_Store
+Thumbs.db
+.gemini/

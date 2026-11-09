@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>AlarmMates — Architecture of Morning · Wake Up Missions &amp; AI Voice Assistant</title>
+  <meta name="description" content="AlarmMates by Tristan: Smart AI alarm clock with 11 wake up missions, hands-free AI voice setting, live camera mouse scan, Pomodoro study timer, and squad sync.">
+  <meta property="og:title" content="AlarmMates | Smart AI Alarm Clock &amp; 11 Wake Up Missions">
+  <meta property="og:description" content="Wake up on time every morning without snoozing your future. 11 wake up missions, AI voice assistant, and live camera scanning.">
+  <meta property="og:image" content="./assets/logo.png">
+  <link rel="icon" type="image/png" href="./assets/logo.png">
+
+  <!-- Kage Authentic Kyoto Mountain Assets & Fonts -->
+  <link rel="stylesheet" href="./secret-pathways-assets/fonts.css">
+  <link rel="stylesheet" href="./kage-style.css">
+  <link rel="stylesheet" href="./styles.css">
+
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
+</head>
+<body>
+  <!-- ======================================================================
+       KAGE 3D WEBGL ENGINE LAYERS (Canvas, Grain, Vignette)
+       ====================================================================== -->
+  <canvas id="gl" aria-hidden="true"></canvas>
+  <div id="vignette" aria-hidden="true"></div>
+  <div id="grain" aria-hidden="true"></div>
+
+  <!-- ======================================================================
+       KAGE PRELOADER (Awakening Kyoto Mountain Temple)
+       ====================================================================== -->
+  <div id="pre" aria-label="Loading AlarmMates 3D Kyoto Temple Scene">
+    <div class="pre-in">
+      <div class="pre-mark">
+        <svg viewBox="0 0 44 44" fill="none" aria-hidden="true">
+          <circle cx="22" cy="24" r="9.5" stroke="#3b82f6" stroke-width="1.2"/>
+          <path d="M6 12h32M9.5 17h25M22 8v28" stroke="#dfe7e0" stroke-width="1.2"/>
+        </svg>
+      </div>
+      <div class="pre-jp jp">目覚まし · ALARMMATES</div>
+      <div class="pre-bar"><i id="pre-fill"></i></div>
+      <div class="pre-meta">
+        <span>Awakening the Kyoto mountain temple</span><b><span id="pre-pct">0</span>%</b>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       NAVIGATION BAR (Kage Fixed Nav · Pure Dark Aesthetic)
+       ====================================================================== -->
+  <header class="nav" id="nav">
+    <a class="brand" href="#top" data-cursor>
+      <img src="./assets/logo.png" alt="AlarmMates logo" width="34" height="34" style="border-radius: 8px;">
+      <span class="brand-tx"><b>ALARMMATES</b><i>ARCHITECTURE OF MORNING</i></span>
+    </a>
+    <nav class="nav-links" id="navlinks">
+      <a class="nav-link" href="#gate" data-cursor><span>Superpowers</span><span class="alt">機能</span></a>
+      <a class="nav-link" href="#pathways" data-cursor><span>11 Missions</span><span class="alt">任務</span></a>
+      <a class="nav-link" href="#lessons" data-cursor><span>Video Demos</span><span class="alt">映像</span></a>
+      <a class="nav-link" href="#developer" data-cursor><span>Developer</span><span class="alt">開発</span></a>
+      <a class="nav-link" href="#download" data-cursor><span>Download</span><span class="alt">入手</span></a>
+    </nav>
+    <div style="display: flex; align-items: center; gap: 12px; margin-left: auto;">
+      <button class="nav-burger" aria-label="Menu" data-cursor><i></i><i></i></button>
+    </div>
+  </header>
+
+  <!-- ======================================================================
+       PAGE WRAPPER
+       ====================================================================== -->
+  <div class="page" id="top">
+
+    <!-- ====================================================================
+         CHAPTER 00: THE APPROACH / HERO
+         ==================================================================== -->
+    <section class="hero" id="hero" data-cam="0">
+      <div class="hero-top" style="max-width: 900px;">
+        <div class="eyebrow"><span class="dot"></span> ARCHITECTURE OF MORNING · 覚醒</div>
+        <!-- Clean Landscape Headline (Never broken into 10 vertical single words) -->
+        <h1 class="hero-headline-landscape">
+          Wake up on time every morning without snoozing your future.
+        </h1>
+      </div>
+
+      <!-- Hero Center 3D Interactive Stage: 3D Logo (Left A) + Soundboard Card (Center A & G) + 3D iPhone (Right G) -->
+      <div class="hero-center-stage">
+        <!-- Left: 3D Animated AlarmMates Logo (Over Letter A) -->
+        <div class="hero-logo-col">
+          <div class="logo-3d-rig" id="logo3dRig" role="button" tabindex="0" aria-label="Interactive 3D AlarmMates Logo: Click or tap to ring alarm with sound">
+            <canvas id="logo3dCanvas" class="logo-3d-canvas"></canvas>
+          </div>
+        </div>
+
+        <!-- Center: 3D Alarm Actions & Sound FX Studio Card (Center between A & G) -->
+        <div class="hero-soundboard-col">
+          <div class="logo-soundboard-card glass-card">
+            <div class="soundboard-header">
+              <span class="soundboard-title">3D ALARM ACTIONS &amp; SOUND FX</span>
+              <button type="button" class="soundboard-mute-btn" id="logoSoundToggle" aria-label="Toggle Sound FX">
+                <i class="ph ph-speaker-high" id="logoSoundIcon"></i>
+                <span id="logoSoundLabel">Sound On</span>
+              </button>
+            </div>
+
+            <div class="soundboard-grid">
+              <button type="button" id="act-ring-now" class="soundboard-btn active" aria-label="Ring Alarm">
+                <div class="sb-btn-title"><i class="ph ph-bell-ringing"></i> Ring Alarm!</div>
+              </button>
+              <button type="button" id="act-bounce" class="soundboard-btn" aria-label="Elastic Pop">
+                <div class="sb-btn-title"><i class="ph ph-lightning"></i> Elastic Pop</div>
+              </button>
+              <button type="button" id="act-spin" class="soundboard-btn" aria-label="360 Flip">
+                <div class="sb-btn-title"><i class="ph ph-arrows-clockwise"></i> 360° Flip</div>
+              </button>
+              <button type="button" id="act-chime" class="soundboard-btn" aria-label="Brand Sting">
+                <div class="sb-btn-title"><i class="ph ph-sparkle"></i> Brand Sting</div>
+              </button>
+            </div>
+
+            <!-- 3D Extrusion Depth Slider -->
+            <div class="soundboard-slider-row">
+              <div class="sb-slider-meta">
+                <span>3D Extrusion Relief Depth</span>
+                <span id="depth-val-label" class="sb-depth-val">1.25x</span>
+              </div>
+              <input id="slider-depth" type="range" min="0.5" max="2.5" step="0.05" value="1.25" class="sb-range-input" aria-label="3D Extrusion Relief Depth" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: 3D Animated iPhone 17 Pro Max (Over Letter G) -->
+        <div class="hero-phone-col">
+          <div class="phone-3d-rig" id="phone3dRig" role="button" tabindex="0" aria-label="Interactive 3D Phone: Click or tap to spin and explore AlarmMates features">
+            <div class="phone-chassis-3d" id="phoneChassis3d">
+              <!-- Front Face (Screen + iPhone 17 Pro Max Dynamic Island + Home Swipe Bar) -->
+              <div class="phone-face phone-face--front">
+                <div class="iphone-dynamic-island-wrap" aria-hidden="true">
+                  <div class="dynamic-island-pill">
+                    <span class="island-camera-dot"></span>
+                    <span class="island-sensor-dot"></span>
+                  </div>
+                </div>
+                <div class="phone-screen-viewport">
+                  <img
+                    src="./assets/screens/missions.png"
+                    alt="AlarmMates mobile app interface showing 11 wake up missions"
+                    id="heroPhoneScreenImg"
+                    class="phone-screen-img"
+                    fetchpriority="high"
+                    width="260"
+                    height="540"
+                  >
+                  <!-- iPhone Home Swipe Indicator Bar Line -->
+                  <div class="iphone-home-indicator" aria-hidden="true">
+                    <span class="home-bar-pill"></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Back Face (iPhone 17 Pro Max Titanium Orange + Triple Sapphire Camera Module) -->
+              <div class="phone-face phone-face--back" aria-hidden="true">
+                <div class="phone-back-plate">
+                  <div class="phone-back-camera-island">
+                    <div class="camera-lens camera-lens--1"><span class="lens-glass"></span></div>
+                    <div class="camera-lens camera-lens--2"><span class="lens-glass"></span></div>
+                    <div class="camera-lens camera-lens--3"><span class="lens-glass"></span></div>
+                    <div class="camera-flash"></div>
+                    <div class="camera-sensor"></div>
+                    <div class="camera-mic"></div>
+                  </div>
+                  <div class="phone-back-logo">
+                    <img src="./assets/logo.png" alt="" width="22" height="22" style="opacity: 0.95; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.5);">
+                    <span style="font-size: 10px; letter-spacing: 0.16em; font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.6); text-transform: uppercase;">AlarmMates</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Subtle Tap Prompt Pill to rotate and preview screens -->
+          <button type="button" class="phone-tap-hint" id="phoneTapHint" aria-label="Click or tap to rotate phone and preview next app feature">
+            <i class="ph ph-hand-tap" aria-hidden="true"></i>
+            <span>11 Wake Up Missions</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Hero Foot Chips (No redundant numbers) -->
+      <div class="hero-foot">
+        <div class="hero-cue"><span>Scroll to enter Kyoto temple</span><span class="track"><i></i></span></div>
+        <div class="chapters" id="chips">
+          <div class="chip" data-chip="0" data-cursor>
+            <span class="tx"><b>Superpowers</b><p>AI Voice Assistant &amp; Live Camera Object Scan.</p></span>
+          </div>
+          <div class="chip" data-chip="1" data-cursor>
+            <span class="tx"><b>11 Missions</b><p>Computer mouse detection, math puzzles, and step counts.</p></span>
+          </div>
+          <div class="chip" data-chip="2" data-cursor>
+            <span class="tx"><b>Video Theater</b><p>Pure English, Taglish commercial &amp; live walkthrough.</p></span>
+          </div>
+          <div class="chip" data-chip="3" data-cursor>
+            <span class="tx"><b>Mascot Studio</b><p>Interactive 8-pose Chibi Tristan lip-sync companion.</p></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-side">
+        <span class="v jp">目覚まし時計</span>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         CHAPTER 01: THE SANMON / FOUR SUPERPOWERS (Clean Title, No 01)
+         ==================================================================== -->
+    <section class="sec" id="gate" data-cam="1">
+      <!-- Foreground 3D Cutout Planes -->
+      <div class="fg" data-fg="gate" aria-hidden="true">
+        <span class="fg-el fg-wall" data-fg-in="left">
+          <img src="./secret-pathways-assets/foreground/png/temple-wall.webp" alt="" width="1536" height="884" loading="lazy" decoding="async">
+        </span>
+        <span class="fg-el fg-pine" data-fg-in="right">
+          <img src="./secret-pathways-assets/foreground/png/pine-tree.webp" alt="" width="1024" height="1438" loading="lazy" decoding="async">
+        </span>
+        <span class="fg-el fg-grass" data-fg-in="up">
+          <img src="./secret-pathways-assets/foreground/png/tall-grass.webp" alt="" width="1717" height="916" loading="lazy" decoding="async">
+        </span>
+      </div>
+
+      <div class="sec-head">
+        <span class="k">The Four Superpowers</span><span class="rule"></span><span class="k jp">主要機能</span>
+      </div>
+
+      <div class="gate-grid">
+        <h2 class="display h-sec">Four built-in systems to break sleep inertia.</h2>
+        <div class="gate-copy">
+          <p class="lead" style="color: #ffffff;">
+            Normal alarms let you tap snooze with your eyes closed. AlarmMates forces your prefrontal cortex to wake up through speech, computer vision, and social accountability.
+          </p>
+        </div>
+      </div>
+
+      <!-- Bento Grid of 4 Superpowers -->
+      <div class="bento-grid" style="margin-top: 36px;">
+        <article class="card-3d bento-col-6 glass-panel">
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: inline-flex; align-items: center; gap: 8px;">
+              <span class="icon-box" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+                <i class="ph ph-microphone-stage" style="font-size: 20px;"></i>
+              </span>
+              <span class="caption-3" style="color: #60a5fa;">HANDS-FREE AI VOICE ASSISTANT</span>
+            </div>
+            <h3 class="heading-4" style="color: #ffffff;">Speak to set alarms in seconds</h3>
+            <p class="body-3" style="color: #dbeafe;">
+              Too sleepy to navigate menus? Simply speak: "Wake me up at 6:30 AM for lecture". The AI parses your time and alarm label automatically.
+            </p>
+          </div>
+        </article>
+
+        <article class="card-3d bento-col-6 glass-panel">
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: inline-flex; align-items: center; gap: 8px;">
+              <span class="icon-box" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+                <i class="ph ph-camera" style="font-size: 20px;"></i>
+              </span>
+              <span class="caption-3" style="color: #60a5fa;">LIVE AI CAMERA OBJECT SCAN</span>
+            </div>
+            <h3 class="heading-4" style="color: #ffffff;">Prove you are out of bed with camera verification</h3>
+            <p class="body-3" style="color: #dbeafe;">
+              The alarm will not shut off until you stand up, walk to your desk, and point the camera at your physical Computer Mouse, Backpack, or Toothbrush. 100% on-device vision.
+            </p>
+          </div>
+        </article>
+
+        <article class="card-3d bento-col-6 glass-panel">
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: inline-flex; align-items: center; gap: 8px;">
+              <span class="icon-box" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+                <i class="ph ph-users-three" style="font-size: 20px;"></i>
+              </span>
+              <span class="caption-3" style="color: #60a5fa;">SQUAD ALARMS &amp; STUDY POMODORO</span>
+            </div>
+            <h3 class="heading-4" style="color: #ffffff;">Synchronize morning wakeups with study partners</h3>
+            <p class="body-3" style="color: #dbeafe;">
+              Join or host a study squad. If anyone snoozes or fails their morning mission, the entire group is alerted. Switch into Pomodoro focus blocks with binaural white noise.
+            </p>
+          </div>
+        </article>
+
+        <article class="card-3d bento-col-6 glass-panel">
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: inline-flex; align-items: center; gap: 8px;">
+              <span class="icon-box" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+                <i class="ph ph-coins" style="font-size: 20px;"></i>
+              </span>
+              <span class="caption-3" style="color: #60a5fa;">100% FREE VIA REWARDS (+2 PTS)</span>
+            </div>
+            <h3 class="heading-4" style="color: #ffffff;">Zero subscription fees · Unlock all premium themes</h3>
+            <p class="body-3" style="color: #dbeafe;">
+              Every feature in AlarmMates is accessible completely free. Watch optional short video ads to earn +2 points per view and unlock premium alarm ringtones and custom HUD skins.
+            </p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         CHAPTER 02: STILL GARDENS / 11 WAKE UP MISSIONS (Clean Title, No 02)
+         ==================================================================== -->
+    <section class="sec" id="pathways" data-cam="2">
+      <!-- Foreground 3D Cutout Planes -->
+      <div class="fg" data-fg="pathways" aria-hidden="true">
+        <span class="fg-el fg-sakura fg-el--sway" data-fg-in="left">
+          <img src="./secret-pathways-assets/foreground/png/sakura-branch.webp" alt="" width="1536" height="1024" loading="lazy" decoding="async">
+        </span>
+        <span class="fg-el fg-leaves fg-el--sway" data-fg-in="right">
+          <img src="./secret-pathways-assets/foreground/png/maple-leaves.webp" alt="" width="1536" height="1024" loading="lazy" decoding="async">
+        </span>
+        <span class="fg-el fg-lantern" data-fg-in="up">
+          <img src="./secret-pathways-assets/foreground/png/stone-lantern.webp" alt="" width="1024" height="1499" loading="lazy" decoding="async">
+        </span>
+        <span class="fg-el fg-bush" data-fg-in="up">
+          <img src="./secret-pathways-assets/foreground/png/garden-bush.webp" alt="" width="1717" height="876" loading="lazy" decoding="async">
+        </span>
+      </div>
+
+      <div class="sec-head">
+        <span class="k">Wake Up Missions</span><span class="rule"></span><span class="k jp">覚醒ミッション</span>
+      </div>
+
+      <div class="cur-head" style="margin-bottom: 24px;">
+        <h2 class="display h-sec">11 ways to ensure you<br class="hide-mobile"> never fall back asleep.</h2>
+      </div>
+
+      <div class="cur" id="cur" style="margin-top: 28px;">
+        <div class="les glass-panel" data-les="0" data-cursor>
+          <div class="mission-header-col">
+            <h3 class="mission-title">
+              <span class="m-en">Camera Object Scan</span>
+              <span class="m-jp jp">物体認識</span>
+            </h3>
+          </div>
+          <p class="mission-desc">Point the camera at your computer mouse or study desk item to silence the alarm.</p>
+          <span class="t mission-badge">Cognitive + Physical</span><i class="bar"></i>
+        </div>
+        <div class="les glass-panel" data-les="1" data-cursor>
+          <div class="mission-header-col">
+            <h3 class="mission-title">
+              <span class="m-en">Math Equations</span>
+              <span class="m-jp jp">数学計算</span>
+            </h3>
+          </div>
+          <p class="mission-desc">Solve multi-step arithmetic problems from simple to engineering difficulty.</p>
+          <span class="t mission-badge">Brain Activating</span><i class="bar"></i>
+        </div>
+        <div class="les glass-panel" data-les="2" data-cursor>
+          <div class="mission-header-col">
+            <h3 class="mission-title">
+              <span class="m-en">Memory Sequence</span>
+              <span class="m-jp jp">記憶力</span>
+            </h3>
+          </div>
+          <p class="mission-desc">Repeat randomized tile flash patterns to engage short-term memory.</p>
+          <span class="t mission-badge">Focus Sharp</span><i class="bar"></i>
+        </div>
+        <div class="les glass-panel" data-les="3" data-cursor>
+          <div class="mission-header-col">
+            <h3 class="mission-title">
+              <span class="m-en">Step Counter</span>
+              <span class="m-jp jp">歩数計</span>
+            </h3>
+          </div>
+          <p class="mission-desc">Walk 15 to 50 physical steps around your room before the alarm stops.</p>
+          <span class="t mission-badge">Active Movement</span><i class="bar"></i>
+        </div>
+        <div class="les glass-panel" data-les="4" data-cursor>
+          <div class="mission-header-col">
+            <h3 class="mission-title">
+              <span class="m-en">Barcode / QR Scan</span>
+              <span class="m-jp jp">バーコード</span>
+            </h3>
+          </div>
+          <p class="mission-desc">Scan your bathroom toothpaste or coffee jar barcode across the house.</p>
+          <span class="t mission-badge">Guaranteed Out of Bed</span><i class="bar"></i>
+        </div>
+        <div class="les glass-panel" data-les="5" data-cursor>
+          <div class="mission-header-col">
+            <h3 class="mission-title">
+              <span class="m-en">Shake Phone</span>
+              <span class="m-jp jp">シェイク</span>
+            </h3>
+          </div>
+          <p class="mission-desc">Shake your phone rhythmically 30 to 100 times to get your blood flowing.</p>
+          <span class="t mission-badge">Reflex Booster</span><i class="bar"></i>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         CHAPTER 03: SACRED CRAFT / VIDEO DEMO THEATER (Clean Title, No 03 · Compact Desktop Size)
+         ==================================================================== -->
+    <section class="sec" id="lessons" data-cam="3" style="scroll-margin-top: 100px;">
+      <!-- Foreground 3D Cutout Planes -->
+      <div class="fg" data-fg="lessons" aria-hidden="true">
+        <span class="fg-el fg-wall fg-el--flip" data-fg-in="right">
+          <img src="./secret-pathways-assets/foreground/png/temple-wall.webp" alt="" width="1536" height="884" loading="lazy" decoding="async">
+        </span>
+        <span class="fg-el fg-stones" data-fg-in="up">
+          <img src="./secret-pathways-assets/foreground/png/basalt-stones.webp" alt="" width="1536" height="996" loading="lazy" decoding="async">
+        </span>
+        <span class="fg-el fg-grass" data-fg-in="up">
+          <img src="./secret-pathways-assets/foreground/png/tall-grass.webp" alt="" width="1717" height="916" loading="lazy" decoding="async">
+        </span>
+      </div>
+
+      <div class="sec-head">
+        <span class="k">Film &amp; Screen Demos</span><span class="rule"></span><span class="k jp">映像デモ</span>
+      </div>
+
+      <div class="video-theater-heading-wrap">
+        <h2 class="video-heading-landscape display h-sec">Watch AlarmMates in motion.</h2>
+      </div>
+
+      <!-- Compact Video Demo Theater Card (Centered & Responsive) -->
+      <div class="video-theater-card glass-panel">
+        <div class="video-toolbar" style="padding: 12px 14px; display: flex; align-items: center; justify-content: center; background: rgba(11, 18, 32, 0.9); border-bottom: 1px solid rgba(59, 130, 246, 0.25);">
+          <div class="apk-mode-tabs" role="tablist" aria-label="Select video demo version" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;">
+            <button type="button" class="apk-mode-tab button-sm is-active" data-video="/assets/videos/AlarmMates_Promo_English.mp4" data-mode="promo_en" style="padding: 8px 14px; font-size: 12px;">
+              <i class="ph ph-film-strip" aria-hidden="true"></i>
+              <span>INTRODUCING ALARMATES</span>
+            </button>
+            <button type="button" class="apk-mode-tab button-sm" data-video="/assets/videos/COMMERCIAL.mp4" data-mode="promo_tl" style="padding: 8px 14px; font-size: 12px;">
+              <i class="ph ph-translate" aria-hidden="true"></i>
+              <span>COMMERCIAL VIDEO ALARMATES</span>
+            </button>
+            <button type="button" class="apk-mode-tab button-sm" data-video="/assets/videos/ADS.mp4" data-mode="walkthrough" style="padding: 8px 14px; font-size: 12px;">
+              <i class="ph ph-device-mobile-camera" aria-hidden="true"></i>
+              <span>ADS FOR ALARMATES</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="video-frame-wrap" style="position: relative; width: 100%; aspect-ratio: 16 / 9; max-height: 440px; background: #000000; overflow: hidden;">
+          <video
+            id="demoVideoPlayer"
+            controls
+            preload="metadata"
+            poster="/assets/videos/intro_poster.jpg"
+            width="1280"
+            height="720"
+            style="width: 100%; height: 100%; max-height: 440px; object-fit: contain; display: block; background: #000000;"
+          >
+            <source src="./assets/videos/AlarmMates_Promo_English.mp4" type="video/mp4">
+          </video>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         CHAPTER 04: DEVELOPER STUDIO & INTERACTIVE CHIBI MASCOT (Clean Title, No 04)
+         ==================================================================== -->
+    <section class="sec" id="developer" data-cam="4">
+      <div class="sec-head">
+        <span class="k">Developer Studio</span><span class="rule"></span><span class="k jp">開発者</span>
+      </div>
+
+      <div class="bento-grid" style="margin-top: 24px;">
+        <!-- Developer Bio Card -->
+        <article class="card-3d bento-col-5 glass-panel">
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            <span class="badge-pill caption-3" style="color: #60a5fa; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 9999px; padding: 4px 10px; width: fit-content;">MEET THE CREATOR &amp; DEVELOPER</span>
+            <h2 class="heading-3" style="color: #ffffff; font-size: 26px;">Hi, I am Tristan 👋</h2>
+            <p class="body-2" style="color: #dbeafe;">
+              I am a Fourth Year BS Computer Engineering student and the developer of AlarmMates. I built AlarmMates to combine on-device AI vision, voice recognition, and squad accountability so students never miss an early class or study session.
+            </p>
+
+            <div class="card-inner-box" style="background: rgba(11, 18, 32, 0.7); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+              <div class="dev-spec-row">
+                <span class="caption-3" style="color: #93c5fd;">ACADEMIC YEAR</span>
+                <span class="body-4 mono-num" style="color: #ffffff; font-weight: 600;">4th Year BS CpE</span>
+              </div>
+              <div class="dev-spec-row">
+                <span class="caption-3" style="color: #93c5fd;">ROLE</span>
+                <span class="body-4" style="color: #ffffff;">Lead App &amp; AI Systems Developer</span>
+              </div>
+              <div class="dev-spec-row">
+                <span class="caption-3" style="color: #93c5fd;">CORE STACK</span>
+                <span class="body-4" style="color: #ffffff;">Android · AI Vision Scan · Voice Assistant</span>
+              </div>
+            </div>
+
+            <button type="button" class="btn btn-primary button-md" id="playTristanIntroVoiceBtn" style="background: #2563eb; color: #ffffff; margin-top: 6px;">
+              <i class="ph ph-waveform" aria-hidden="true"></i>
+              <span>Hear Tristan Introduce AlarmMates</span>
+            </button>
+          </div>
+        </article>
+
+        <!-- Interactive Chibi Mascot Studio Card -->
+        <article class="card-3d bento-col-7 glass-panel">
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;">
+            <span class="caption-3" style="color: #60a5fa; font-weight: 600; letter-spacing: 0.1em;">INTERACTIVE CHIBI MASCOT STUDIO</span>
+            <h3 class="heading-4" style="color: #ffffff; font-size: 19px;">Click any Chibi Tristan sticker pose to trigger live voice and mouth animation</h3>
+          </div>
+
+          <!-- Compact 8-Pose Grid -->
+          <div class="sticker-pose-grid" id="stickerPoseGrid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+            <button type="button" class="sticker-pose-card is-active glass-card" data-pose="boy_pose_6_wave_dev" data-audio="/assets/audio/scene_02_dev_intro_english.mp3" data-line="By the way, hi! I am Tristan, a Fourth Year Computer Engineering student and developer of AlarmMates!">
+              <img src="./assets/stickers/boy_pose_6_wave_dev_open.png" alt="Tristan waving pose" width="68" height="68" loading="lazy" style="width: 68px; height: 68px; object-fit: contain;">
+              <span class="caption-3" style="color: #ffffff; font-size: 11px;">1. Dev Wave 👋</span>
+            </button>
+
+            <button type="button" class="sticker-pose-card glass-card" data-pose="boy_pose_7_pointing" data-audio="/assets/audio/scene_01_hook_english.mp3" data-line="Did you know there is an all in one smart alarm clock? It is called AlarmMates!">
+              <img src="./assets/stickers/boy_pose_7_pointing_open.png" alt="Tristan pointing pose" width="68" height="68" loading="lazy" style="width: 68px; height: 68px; object-fit: contain;">
+              <span class="caption-3" style="color: #ffffff; font-size: 11px;">2. Point UI ☝️</span>
+            </button>
+
+            <button type="button" class="sticker-pose-card glass-card" data-pose="boy_pose_8_mic_ai" data-audio="/assets/audio/scene_04_ai_assistant_english.mp3" data-line="With the AlarmMates AI Assistant, just speak your wake up time and it sets your alarm automatically!">
+              <img src="./assets/stickers/boy_pose_8_mic_ai_open.png" alt="Tristan holding AI microphone pose" width="68" height="68" loading="lazy" style="width: 68px; height: 68px; object-fit: contain;">
+              <span class="caption-3" style="color: #ffffff; font-size: 11px;">3. AI Voice Mic 🎙️</span>
+            </button>
+
+            <button type="button" class="sticker-pose-card glass-card" data-pose="boy_pose_2_shocked" data-audio="/assets/audio/scene_05_missions_scan_english.mp3" data-line="Wake up your brain with 11 Wake Up Missions including Live AI Camera Mouse Scan!">
+              <img src="./assets/stickers/boy_pose_2_shocked_open.png" alt="Tristan shocked pose" width="68" height="68" loading="lazy" style="width: 68px; height: 68px; object-fit: contain;">
+              <span class="caption-3" style="color: #ffffff; font-size: 11px;">4. Shocked 😱</span>
+            </button>
+
+            <button type="button" class="sticker-pose-card glass-card" data-pose="boy_pose_3_tech" data-audio="/assets/audio/scene_06_study_squad_english.mp3" data-line="Boost productivity with the Study Pomodoro Timer and wake up together with Squad Alarms!">
+              <img src="./assets/stickers/boy_pose_3_tech_open.png" alt="Tristan holding laptop pose" width="68" height="68" loading="lazy" style="width: 68px; height: 68px; object-fit: contain;">
+              <span class="caption-3" style="color: #ffffff; font-size: 11px;">5. Tech Laptop 💻</span>
+            </button>
+
+            <button type="button" class="sticker-pose-card glass-card" data-pose="boy_pose_1_present" data-audio="/assets/audio/scene_03_pillars_english.mp3" data-line="Here are the four superpowers of AlarmMates: AI Voice, 11 Missions, Study Squad, and Free Rewards!">
+              <img src="./assets/stickers/boy_pose_1_present_open.png" alt="Tristan presenting pose" width="68" height="68" loading="lazy" style="width: 68px; height: 68px; object-fit: contain;">
+              <span class="caption-3" style="color: #ffffff; font-size: 11px;">6. Presenter ✨</span>
+            </button>
+
+            <button type="button" class="sticker-pose-card glass-card" data-pose="boy_pose_4_alarm" data-audio="/assets/audio/scene_07_watch_ads_rewards_english.mp3" data-line="Unlock every premium feature completely free via optional rewards. No subscription needed!">
+              <img src="./assets/stickers/boy_pose_4_alarm_open.png" alt="Tristan with alarm clock pose" width="68" height="68" loading="lazy" style="width: 68px; height: 68px; object-fit: contain;">
+              <span class="caption-3" style="color: #ffffff; font-size: 11px;">7. Alarm Ring ⏰</span>
+            </button>
+
+            <button type="button" class="sticker-pose-card glass-card" data-pose="boy_pose_5_thumbsup" data-audio="/assets/audio/scene_08_outro_english.mp3" data-line="Thank you for checking out AlarmMates! Wake up on time and succeed every day!">
+              <img src="./assets/stickers/boy_pose_5_thumbsup_open.png" alt="Tristan thumbs up pose" width="68" height="68" loading="lazy" style="width: 68px; height: 68px; object-fit: contain;">
+              <span class="caption-3" style="color: #ffffff; font-size: 11px;">8. Thumbs Up 🏆</span>
+            </button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         CHAPTER 05: AFTERLIGHT / FAQ & FINAL CTA (Clean Title, No 05)
+         ==================================================================== -->
+    <section class="sec fin" id="download" data-cam="5">
+      <!-- Foreground 3D Cutout Planes -->
+      <div class="fg" data-fg="eternity" aria-hidden="true">
+        <span class="fg-el fg-hill" data-fg-in="up">
+          <img src="./secret-pathways-assets/foreground/png/hill.webp" alt="" width="1774" height="887" loading="lazy" decoding="async">
+        </span>
+        <span class="fg-el fg-ruins" data-fg-in="left">
+          <img src="./secret-pathways-assets/foreground/png/shrine-ruins.webp" alt="" width="1536" height="1001" loading="lazy" decoding="async">
+        </span>
+        <span class="fg-el fg-grass" data-fg-in="up">
+          <img src="./secret-pathways-assets/foreground/png/tall-grass.webp" alt="" width="1717" height="916" loading="lazy" decoding="async">
+        </span>
+        <span class="fg-el fg-sakura" data-fg-in="left">
+          <img src="./secret-pathways-assets/foreground/png/sakura-branch.webp" alt="" width="1536" height="1024" loading="lazy" decoding="async">
+        </span>
+      </div>
+
+      <div class="sec-head">
+        <span class="k">Afterlight &amp; Alarms</span><span class="rule"></span><span class="k jp">残光</span>
+      </div>
+
+      <!-- Split CTA & Aurello-Style FAQ Section (Aurello Layout from threeui.com/section-aurello-faq) -->
+      <div class="split-cta-faq-grid" id="faq">
+        <!-- Left Column: CTA Banner with Full APK Hub & Real-Time Downloads (Migrated from Hero) -->
+        <div class="cta-banner-card glass-panel" id="apk-hub">
+          <div class="cta-inner-content">
+            <!-- Header Row: Logo, Eyebrow & GitHub Settings -->
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; width: 100%;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <img src="./assets/logo.png" alt="AlarmMates logo" width="42" height="42" style="border-radius: 10px; display: block; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
+                <span class="eyebrow" style="color: #60a5fa;">GET STARTED · 覚醒アプリ</span>
+              </div>
+
+              <button type="button" class="btn btn-secondary button-xsm" id="openApkConfigBtn">
+                <i class="ph ph-github-logo" aria-hidden="true"></i>
+                <span id="githubStatusLabel">GitHub APK Settings</span>
+              </button>
+            </div>
+
+            <!-- Full Width Headline (Never squished vertically) -->
+            <h2 class="display" style="color: #ffffff; font-size: clamp(20px, 2.4vw, 32px); line-height: 1.25; margin: 0 0 10px; width: 100%;">
+              Ready to wake up early, stay focused, and succeed every day?
+            </h2>
+
+            <p class="body-lg" style="color: #dbeafe; font-size: 14px; line-height: 1.5; margin: 0 0 16px;">
+              100% free Android download · No subscription required · Developed by Tristan
+            </p>
+
+            <!-- Mode Selector Tabs: Desktop QR Scan & Phone Auto Download -->
+            <div class="apk-mode-tabs" role="tablist" aria-label="Device download mode" style="margin-bottom: 14px;">
+              <button type="button" class="apk-mode-tab button-xsm is-active" id="tabDesktopQr" role="tab" aria-selected="true">
+                <i class="ph ph-qr-code" aria-hidden="true"></i>
+                <span>Desktop QR Scan</span>
+              </button>
+              <button type="button" class="apk-mode-tab button-xsm" id="tabMobileAuto" role="tab" aria-selected="false">
+                <i class="ph ph-device-mobile" aria-hidden="true"></i>
+                <span>Phone Auto Download</span>
+              </button>
+            </div>
+
+            <!-- Desktop QR Code Panel -->
+            <div id="panelDesktopQr" class="apk-panel-grid">
+              <div class="qr-frame-box" style="width: 140px; height: 140px; background: rgba(11, 18, 32, 0.7); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 12px; padding: 8px; display: flex; align-items: center; justify-content: center;" title="QR code activates once official AlarmMates APK is published">
+                <div id="heroQrSvgContainer" style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 6px; background: rgba(11, 18, 32, 0.65); border-radius: 8px; color: var(--text-muted);">
+                  <i class="ph ph-qr-code" style="font-size: 34px; margin-bottom: 4px; opacity: 0.65; color: #60a5fa;" aria-hidden="true"></i>
+                  <span style="font-size: 10.5px; font-weight: 500; color: #93c5fd;">Official APK In Testing</span>
+                </div>
+              </div>
+
+              <div class="apk-panel-details">
+                <div style="display: inline-flex; align-items: center; gap: 6px;">
+                  <i class="ph ph-camera" style="color: #60a5fa;" aria-hidden="true"></i>
+                  <span class="title-3" style="color: #ffffff; font-size: 14px;">Opened on computer? Scan with your phone</span>
+                </div>
+                <p class="body-5" style="color: #dbeafe; font-size: 13px; line-height: 1.5; margin: 6px 0 12px;">
+                  Point your phone camera at this QR code. When opened on mobile, the official AlarmMates APK download starts automatically and increments the live download counter in real time.
+                </p>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                  <button type="button" class="btn btn-primary button-sm" id="directApkDownloadBtn" disabled style="opacity: 0.7; cursor: not-allowed; background: #2563eb; color: #ffffff;">
+                    <i class="ph ph-download-simple" aria-hidden="true"></i>
+                    <span id="directApkBtnText">Official APK Coming Soon (<span id="apkVersionBadge">v1.0.4</span>)</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mobile Auto Download Panel -->
+            <div id="panelMobileAuto" style="display: none; flex-direction: column; gap: 12px;">
+              <div class="card-inner-box" style="border: 1px solid rgba(59, 130, 246, 0.35); background: rgba(11, 18, 32, 0.6); padding: 16px; border-radius: 12px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="pulse-dot" aria-hidden="true"></span>
+                    <span class="title-3" id="mobileCardHeadline" style="color: #ffffff;">Phone Mode · Official APK Coming Soon</span>
+                  </div>
+                  <span class="caption-3 mono-num" style="color: #60a5fa;" id="mobileSizeBadge">Android 8.0+</span>
+                </div>
+                <p class="body-5" style="color: #dbeafe; margin: 8px 0;" id="mobileCardSubtext">
+                  Automatic mobile APK download will activate as soon as Tristan publishes the official AlarmMates release bundle.
+                </p>
+                <button type="button" class="btn btn-primary button-md" id="mobileBigDownloadBtn" disabled style="width: 100%; opacity: 0.7; cursor: not-allowed; background: #2563eb; color: #ffffff;">
+                  <i class="ph ph-android-logo" aria-hidden="true"></i>
+                  <span id="mobileBigBtnText">Official APK Coming Soon</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Live Real-Time Download Counter (0 while in testing) -->
+            <div class="realtime-counter-bar" aria-live="polite" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(59, 130, 246, 0.2); display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <span class="caption-4" style="color: #93c5fd; display: block; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;">REAL TIME APK DOWNLOADS</span>
+                <div class="counter-number-wrap" style="display: flex; align-items: center; gap: 8px; margin-top: 2px;">
+                  <span class="counter-big mono-num" id="heroDownloadCount" style="font-size: 24px; font-weight: 600; color: #ffffff;">0</span>
+                  <span style="font-size: 11px; color: #60a5fa; display: inline-flex; align-items: center; gap: 4px;">
+                    <i class="ph ph-broadcast" aria-hidden="true"></i> Live SSE connected
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: FAQ Accordion (Aurello Design from threeui.com/section-aurello-faq) -->
+        <div class="faq-accordion-card glass-panel">
+          <div class="faq-head-meta">
+            <span class="eyebrow" style="color: #60a5fa;">GOOD TO KNOW · よくある質問</span>
+            <h3 class="display" style="color: #ffffff; font-size: clamp(22px, 2.2vw, 30px); margin: 6px 0 16px;">
+              Frequently Asked Questions
+            </h3>
+          </div>
+
+          <div class="aurello-faq-list">
+            <!-- FAQ Item 1 -->
+            <div class="aurello-faq-item is-open">
+              <button type="button" class="aurello-faq-toggle" aria-expanded="true">
+                <span class="faq-q-text">IS ALARMMATES REALLY 100% FREE?</span>
+                <span class="faq-icon" aria-hidden="true">−</span>
+              </button>
+              <div class="aurello-faq-answer">
+                <p>Yes. All 11 wake up missions, offline AI voice assistant, and squad alarms are completely free. You can earn free reward points (+2 pts) by watching optional short ads to unlock premium HUD themes and custom alarm ringtones.</p>
+              </div>
+            </div>
+
+            <!-- FAQ Item 2 -->
+            <div class="aurello-faq-item">
+              <button type="button" class="aurello-faq-toggle" aria-expanded="false">
+                <span class="faq-q-text">HOW DOES THE AI CAMERA OBJECT SCAN WORK?</span>
+                <span class="faq-icon" aria-hidden="true">+</span>
+              </button>
+              <div class="aurello-faq-answer">
+                <p>AlarmMates runs on-device Google ML Kit vision models. To shut off your alarm, you simply walk over and point the camera at your designated physical object (like your Computer Mouse, Backpack, or Toothbrush) across your room.</p>
+              </div>
+            </div>
+
+            <!-- FAQ Item 3 -->
+            <div class="aurello-faq-item">
+              <button type="button" class="aurello-faq-toggle" aria-expanded="false">
+                <span class="faq-q-text">IS MY CAMERA &amp; AUDIO DATA PRIVATE?</span>
+                <span class="faq-icon" aria-hidden="true">+</span>
+              </button>
+              <div class="aurello-faq-answer">
+                <p>100% on-device privacy. Both camera object detection and voice recognition execute entirely inside your phone's processor. Zero photos, audio samples, or sensor feeds are ever transmitted to any cloud server.</p>
+              </div>
+            </div>
+
+            <!-- FAQ Item 4 -->
+            <div class="aurello-faq-item">
+              <button type="button" class="aurello-faq-toggle" aria-expanded="false">
+                <span class="faq-q-text">HOW DO SQUAD ALARMS KEEP ME ACCOUNTABLE?</span>
+                <span class="faq-icon" aria-hidden="true">+</span>
+              </button>
+              <div class="aurello-faq-answer">
+                <p>Squad Sync links alarms with your study partners. If any squad member hits snooze or fails their morning mission, the entire group is instantly alerted to hold each other accountable.</p>
+              </div>
+            </div>
+
+            <!-- FAQ Item 5 -->
+            <div class="aurello-faq-item">
+              <button type="button" class="aurello-faq-toggle" aria-expanded="false">
+                <span class="faq-q-text">WHICH ANDROID VERSIONS ARE COMPATIBLE?</span>
+                <span class="faq-icon" aria-hidden="true">+</span>
+              </button>
+              <div class="aurello-faq-answer">
+                <p>AlarmMates is engineered for Android 8.0 (Oreo) through Android 15+, tested across Xiaomi MIUI/HyperOS, Samsung One UI, and Google Pixel with zero battery-drain background services.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         FOOTER (Centered Legal Only)
+         ==================================================================== -->
+    <footer class="foot" data-cam="6">
+      <div class="fg" data-fg="foot" aria-hidden="true">
+        <span class="fg-el fg-bush" data-fg-in="up">
+          <img src="./secret-pathways-assets/foreground/png/garden-bush.webp" alt="" width="1717" height="876" loading="lazy" decoding="async">
+        </span>
+      </div>
+      <div style="width: 100%; text-align: center; padding: 32px 16px; color: #dbeafe; font-size: 13px;">
+        <span>© 2026 AlarmMates. All rights reserved.</span>
+      </div>
+    </footer>
+
+  </div><!-- /.page -->
+
+  <!-- Foreground Sky Holder for Fixed Lifted Planes -->
+  <div id="fg-sky" aria-hidden="true"></div>
+
+  <!-- Kage Chapter Waypoint Rail -->
+  <div class="rail" id="rail"></div>
+
+  <!-- Floating Interactive Chibi Tristan (Transparent Cutout Mascot, No Circle, Audio & Lip-Sync Only) -->
+  <div class="chibi-companion-dock" id="chibiCompanionDock" aria-label="Interactive Developer Tristan Mascot">
+    <button type="button" class="chibi-avatar-trigger" id="chibiAvatarTrigger" aria-label="Click to hear Tristan speak" data-cursor>
+      <img
+        src="./assets/stickers/boy_pose_6_wave_dev_open.png"
+        alt="Chibi developer Tristan animated sticker mascot"
+        id="chibiCompanionImg"
+        class="chibi-companion-img"
+        width="96"
+        height="96"
+      >
+    </button>
+  </div>
+
+  <!-- Light Dismiss Modal for GitHub APK Settings -->
+  <dialog id="apkConfigModal" class="apk-config-dialog">
+    <div class="apk-modal-card glass-panel" style="background: #0a0e12; border: 1px solid rgba(59, 130, 246, 0.4); padding: 24px; border-radius: 16px; color: #ffffff;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <i class="ph ph-github-logo" style="font-size: 24px; color: #60a5fa;" aria-hidden="true"></i>
+          <span class="title-2" style="color: #ffffff;">GitHub APK Settings</span>
+        </div>
+        <form method="dialog">
+          <button type="submit" class="btn btn-icon-only" aria-label="Close dialog">
+            <i class="ph ph-x" aria-hidden="true"></i>
+          </button>
+        </form>
+      </div>
+
+      <p class="body-4" style="color: #dbeafe; margin-bottom: 16px;">
+        Configure the official GitHub repository releases link for automatic OTA APK delivery.
+      </p>
+
+      <form id="apkSettingsForm" style="display: flex; flex-direction: column; gap: 14px;">
+        <div>
+          <label for="inputGithubApkUrl" class="caption-3" style="color: #93c5fd; display: block; margin-bottom: 6px;">
+            GITHUB RELEASES APK DOWNLOAD URL
+          </label>
+          <input
+            type="url"
+            id="inputGithubApkUrl"
+            class="form-input"
+            placeholder="https://github.com/Tristan/AlarmMates/releases/download/v1.0.4/AlarmMates.apk"
+            style="width: 100%; padding: 10px 12px; background: rgba(11, 18, 32, 0.8); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 8px; color: #ffffff;"
+          >
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+          <button type="button" class="btn btn-secondary button-sm" id="cancelApkSettingsBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary button-sm" style="background: #2563eb; color: #ffffff;">Save Settings</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- ======================================================================
+       SCRIPTS: QR Generator, GSAP, Kage 3D WebGL Engine & AlarmMates App Logic
+       ====================================================================== -->
+  <script src="./qrcode.js"></script>
+  <script src="./assets/vendor/gsap.min.js"></script>
+  <script src="./secret-pathways-assets/three.min.js"></script>
+  <script src="./logo3d.js"></script>
+  <script src="./kage-engine.js"></script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
