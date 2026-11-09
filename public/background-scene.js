@@ -11,7 +11,7 @@
    - Responsive & adaptive to Dark / Light themes
    ========================================================================== */
 
-import * as THREE from "/assets/vendor/hero3d/vendor/three.module.js";
+import * as THREE from "./assets/vendor/hero3d/vendor/three.module.js";
 
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const sat = (v) => clamp(v, 0, 1);

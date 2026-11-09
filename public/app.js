@@ -1150,11 +1150,7 @@ document.querySelectorAll(".video-toolbar .apk-mode-tab").forEach((tab) => {
     const src = tab.getAttribute("data-video");
     const mode = tab.getAttribute("data-mode");
     if (demoVideoPlayer && src) {
-      if (mode === "promo_en") {
-        demoVideoPlayer.setAttribute("poster", "./assets/videos/intro_poster.jpg");
-      } else {
-        demoVideoPlayer.removeAttribute("poster");
-      }
+      demoVideoPlayer.setAttribute("poster", "./assets/videos/intro_poster.jpg");
       demoVideoPlayer.src = src;
       demoVideoPlayer.load();
       demoVideoPlayer.play().catch(() => {});
