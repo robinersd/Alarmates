@@ -343,9 +343,9 @@ let currentServerStats = {
   totalDownloads: 0,
   mobileDownloads: 0,
   desktopDownloads: 0,
-  apkVersion: "v1.0.4",
-  apkSizeMb: "28.4 MB",
-  githubApkUrl: "",
+  apkVersion: "v1.1",
+  apkSizeMb: "80.2 MB",
+  githubApkUrl: "https://github.com/robinersd/Alarmates_v1/releases/download/v1.1/AlarMates-1.1-release.apk",
   lanIp: window.location.hostname || "127.0.0.1",
   port: window.location.port || "3000"
 };
@@ -442,24 +442,22 @@ function updateStatsUI(data, isLiveIncrement = false) {
 }
 
 async function triggerApkDownload(source = "web") {
-  const hasOfficialApk = Boolean(currentServerStats.githubApkUrl && currentServerStats.githubApkUrl.startsWith("http"));
-  if (!hasOfficialApk) {
-    return;
-  }
+  const url = currentServerStats.githubApkUrl || "https://github.com/robinersd/Alarmates_v1/releases/download/v1.1/AlarMates-1.1-release.apk";
   try {
-    const res = await fetch(`/api/download-apk?source=${encodeURIComponent(source)}&mode=json`);
-    if (res.ok) {
-      const info = await res.json();
-      if (!info.ok) return;
-      updateStatsUI(info, true);
-      const a = document.createElement("a");
-      a.href = info.downloadUrl;
-      a.setAttribute("download", "AlarmMates-release.apk");
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }
+    fetch(`/api/download-apk?source=${encodeURIComponent(source)}&mode=json`)
+      .then(r => r.json())
+      .then(info => {
+        if (info && info.ok) updateStatsUI(info, true);
+      })
+      .catch(() => {});
   } catch {}
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.setAttribute("download", "AlarMates-1.1-release.apk");
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 }
 
 document.getElementById("directApkDownloadBtn")?.addEventListener("click", () => triggerApkDownload("desktop"));
