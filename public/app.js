@@ -478,11 +478,10 @@ document.getElementById("simulatePhoneScanBtn")?.addEventListener("click", () =>
   startMobileAutoDownloadFlow("mobile_sim");
 });
 
-// Detect real mobile user-agent or ?autoDownload=1 from QR scan on page load
-const urlParams = new URLSearchParams(window.location.search);
+// Set initial APK panel mode based on screen device (no automatic downloads on page load)
 const isMobileUA = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-if (urlParams.get("autoDownload") === "1" || isMobileUA) {
-  startMobileAutoDownloadFlow(urlParams.get("source") || "qr");
+if (isMobileUA) {
+  setApkPanelMode("mobile");
 } else {
   setApkPanelMode("desktop");
 }
