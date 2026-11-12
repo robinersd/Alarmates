@@ -339,8 +339,11 @@ const apkVersionBadge = document.getElementById("apkVersionBadge");
 const mobileSizeBadge = document.getElementById("mobileSizeBadge");
 const githubStatusLabel = document.getElementById("githubStatusLabel");
 
+let githubReleaseDownloads = 12;
+let localOptimisticIncrements = 0;
+
 let currentServerStats = {
-  totalDownloads: 0,
+  totalDownloads: 12,
   mobileDownloads: 0,
   desktopDownloads: 0,
   apkVersion: "v1.1",
@@ -416,8 +419,13 @@ function renderQrCodeForState() {
 
 function updateStatsUI(data, isLiveIncrement = false) {
   currentServerStats = { ...currentServerStats, ...data };
+  const combinedTotal = Math.max(
+    Number(currentServerStats.totalDownloads || 0),
+    githubReleaseDownloads + localOptimisticIncrements
+  );
+  currentServerStats.totalDownloads = combinedTotal;
   const hasOfficialApk = Boolean(currentServerStats.githubApkUrl && currentServerStats.githubApkUrl.startsWith("http"));
-  const displayedTotal = hasOfficialApk ? currentServerStats.totalDownloads : 0;
+  const displayedTotal = hasOfficialApk ? combinedTotal : 0;
 
   if (heroDownloadCount) {
     heroDownloadCount.textContent = String(displayedTotal);
@@ -426,10 +434,10 @@ function updateStatsUI(data, isLiveIncrement = false) {
       setTimeout(() => heroDownloadCount.classList.remove("is-bumping"), 350);
     }
   }
-  if (apkVersionBadge) apkVersionBadge.textContent = currentServerStats.apkVersion || "v1.0.4";
+  if (apkVersionBadge) apkVersionBadge.textContent = currentServerStats.apkVersion || "v1.1";
   if (mobileSizeBadge) {
     mobileSizeBadge.textContent = hasOfficialApk
-      ? `${currentServerStats.apkSizeMb || "28.4 MB"} · Android 8.0+`
+      ? `${currentServerStats.apkSizeMb || "80.2 MB"} · Android 8.0+`
       : "Android 8.0+";
   }
   if (githubStatusLabel) {
@@ -441,13 +449,44 @@ function updateStatsUI(data, isLiveIncrement = false) {
   renderQrCodeForState();
 }
 
+async function syncGitHubReleaseDownloads() {
+  try {
+    const res = await fetch("https://api.github.com/repos/robinersd/Alarmates_v1/releases", {
+      headers: { "Accept": "application/vnd.github+json" },
+      cache: "no-store"
+    });
+    if (!res.ok) return;
+    const releases = await res.json();
+    if (!Array.isArray(releases)) return;
+    let total = 0;
+    for (const rel of releases) {
+      for (const asset of rel.assets || []) {
+        if (asset.name && asset.name.toLowerCase().endsWith(".apk")) {
+          total += Number(asset.download_count || 0);
+        }
+      }
+    }
+    if (total > 0) {
+      const prevDisplayed = currentServerStats.totalDownloads || 0;
+      githubReleaseDownloads = total;
+      if (githubReleaseDownloads >= prevDisplayed) {
+        localOptimisticIncrements = 0;
+      }
+      updateStatsUI({ totalDownloads: Math.max(prevDisplayed, githubReleaseDownloads) }, total > prevDisplayed);
+    }
+  } catch {}
+}
+
 async function triggerApkDownload(source = "web") {
   const url = currentServerStats.githubApkUrl || "https://github.com/robinersd/Alarmates_v1/releases/download/v1.1/AlarMates-1.1-release.apk";
+  localOptimisticIncrements += 1;
+  updateStatsUI({ totalDownloads: Math.max((currentServerStats.totalDownloads || 0) + 1, githubReleaseDownloads + localOptimisticIncrements) }, true);
+
   try {
     fetch(`/api/download-apk?source=${encodeURIComponent(source)}&mode=json`)
       .then(r => r.json())
       .then(info => {
-        if (info && info.ok) updateStatsUI(info, true);
+        if (info && info.ok) updateStatsUI(info, false);
       })
       .catch(() => {});
   } catch {}
@@ -458,6 +497,8 @@ async function triggerApkDownload(source = "web") {
   document.body.appendChild(a);
   a.click();
   a.remove();
+
+  setTimeout(syncGitHubReleaseDownloads, 4000);
 }
 
 document.getElementById("directApkDownloadBtn")?.addEventListener("click", () => triggerApkDownload("desktop"));
@@ -486,8 +527,13 @@ if (isMobileUA) {
   setApkPanelMode("desktop");
 }
 
-// Connect to Real-Time Server-Sent Events (/api/events)
-renderQrCodeForState();
+// Connect to Real-Time Server-Sent Events (/api/events) & Permanent GitHub Release Counter
+updateStatsUI(currentServerStats, false);
+syncGitHubReleaseDownloads();
+setInterval(syncGitHubReleaseDownloads, 30000);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) syncGitHubReleaseDownloads();
+});
 try {
   const evtSource = new EventSource("/api/events");
   evtSource.onmessage = (e) => {

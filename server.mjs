@@ -47,8 +47,8 @@ function loadDb() {
     }
   }
   const initial = {
-    totalDownloads: 0,
-    mobileDownloads: 0,
+    totalDownloads: 12,
+    mobileDownloads: 12,
     desktopDownloads: 0,
     apkVersion: "v1.1",
     apkSizeMb: "80.2 MB",
@@ -66,6 +66,37 @@ function saveDb(db) {
 
 let db = loadDb();
 const sseClients = new Set();
+
+async function syncGitHubReleasesCount() {
+  try {
+    const res = await fetch("https://api.github.com/repos/robinersd/Alarmates_v1/releases", {
+      headers: {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "AlarmMates-Website-Server"
+      }
+    });
+    if (!res.ok) return;
+    const releases = await res.json();
+    if (!Array.isArray(releases)) return;
+    let ghTotal = 0;
+    for (const rel of releases) {
+      if (Array.isArray(rel.assets)) {
+        for (const asset of rel.assets) {
+          if (typeof asset.download_count === "number") {
+            ghTotal += asset.download_count;
+          }
+        }
+      }
+    }
+    if (ghTotal > (db.totalDownloads || 0)) {
+      db.totalDownloads = ghTotal;
+      saveDb(db);
+      broadcastStats();
+    }
+  } catch {
+    // ignore transient network errors
+  }
+}
 
 function broadcastStats(lastEvent = null) {
   const payload = JSON.stringify({
@@ -343,6 +374,9 @@ server.listen(PORT, () => {
   console.log(`AlarmMates Real-Time Website Server running:`);
   console.log(`  Local:   http://localhost:${PORT}`);
   console.log(`  Network: http://${lanIp}:${PORT}`);
+
+  syncGitHubReleasesCount();
+  setInterval(syncGitHubReleasesCount, 60000);
 
   // Skip local SSH tunnel when running in cloud environments (Render, Vercel, Railway)
   const isCloud = Boolean(process.env.RENDER || process.env.VERCEL || process.env.NODE_ENV === "production");
