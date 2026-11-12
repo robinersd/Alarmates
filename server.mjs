@@ -50,9 +50,9 @@ function loadDb() {
     totalDownloads: 12,
     mobileDownloads: 12,
     desktopDownloads: 0,
-    apkVersion: "v1.3",
+    apkVersion: "v1.4",
     apkSizeMb: "80.2 MB",
-    githubApkUrl: "https://github.com/robinersd/Alarmates_v1/releases/download/v1.3/AlarMates-1.3-release.apk",
+    githubApkUrl: "https://github.com/robinersd/Alarmates_v1/releases/download/v1.4/AlarMates-1.4-release.apk",
     publicTunnelUrl: "",
     recentEvents: []
   };
