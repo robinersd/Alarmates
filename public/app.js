@@ -346,9 +346,9 @@ let currentServerStats = {
   totalDownloads: 12,
   mobileDownloads: 0,
   desktopDownloads: 0,
-  apkVersion: "v1.1",
+  apkVersion: "v1.3",
   apkSizeMb: "80.2 MB",
-  githubApkUrl: "https://github.com/robinersd/Alarmates_v1/releases/download/v1.1/AlarMates-1.1-release.apk",
+  githubApkUrl: "https://github.com/robinersd/Alarmates_v1/releases/download/v1.3/AlarMates-1.3-release.apk",
   lanIp: window.location.hostname || "127.0.0.1",
   port: window.location.port || "3000"
 };
@@ -401,7 +401,7 @@ function renderQrCodeForState() {
     directBtn.style.cursor = "pointer";
   }
   if (directBtnText) {
-    directBtnText.innerHTML = `Download APK directly (<span id="apkVersionBadge">${currentServerStats.apkVersion || "v1.0.4"}</span>)`;
+    directBtnText.innerHTML = `Download APK directly (<span id="apkVersionBadge">${currentServerStats.apkVersion || "v1.3"}</span>)`;
   }
   if (mobileBigBtn) {
     mobileBigBtn.disabled = false;
@@ -409,7 +409,7 @@ function renderQrCodeForState() {
     mobileBigBtn.style.cursor = "pointer";
   }
   if (mobileBigBtnText) {
-    mobileBigBtnText.textContent = `Download AlarMates ${currentServerStats.apkVersion || "v1.1"} APK (${currentServerStats.apkSizeMb || "80.2 MB"})`;
+    mobileBigBtnText.textContent = `Download AlarMates ${currentServerStats.apkVersion || "v1.3"} APK (${currentServerStats.apkSizeMb || "80.2 MB"})`;
   }
 
   if (window.AlarmMatesQR) {
@@ -417,8 +417,9 @@ function renderQrCodeForState() {
   }
 }
 
+let githubLatestPatch = null; // latest GitHub release info always wins over stale server data
 function updateStatsUI(data, isLiveIncrement = false) {
-  currentServerStats = { ...currentServerStats, ...data };
+  currentServerStats = { ...currentServerStats, ...data, ...(githubLatestPatch || {}) };
   const combinedTotal = Math.max(
     Number(currentServerStats.totalDownloads || 0),
     githubReleaseDownloads + localOptimisticIncrements
@@ -434,7 +435,13 @@ function updateStatsUI(data, isLiveIncrement = false) {
       setTimeout(() => heroDownloadCount.classList.remove("is-bumping"), 350);
     }
   }
-  if (apkVersionBadge) apkVersionBadge.textContent = currentServerStats.apkVersion || "v1.1";
+  if (apkVersionBadge) apkVersionBadge.textContent = currentServerStats.apkVersion || "v1.3";
+  document.querySelectorAll(".apk-ver-text").forEach(el => {
+    el.textContent = currentServerStats.apkVersion || "v1.3";
+  });
+  document.querySelectorAll(".apk-size-text").forEach(el => {
+    el.textContent = currentServerStats.apkSizeMb || "80.2 MB";
+  });
   if (mobileSizeBadge) {
     mobileSizeBadge.textContent = hasOfficialApk
       ? `${currentServerStats.apkSizeMb || "80.2 MB"} · Android 8.0+`
@@ -449,15 +456,41 @@ function updateStatsUI(data, isLiveIncrement = false) {
   renderQrCodeForState();
 }
 
-async function syncGitHubReleaseDownloads() {
+async function syncGitHubReleaseDownloads(force = false) {
+  // GitHub allows only 60 API calls/hour per visitor IP, so cache results for 10 minutes
+  const CACHE_KEY = "am_gh_release_cache_v1";
+  const CACHE_TTL = 10 * 60 * 1000;
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null"); } catch {}
+
+  let releases = null;
+  if (!force && cached && Date.now() - cached.savedAt < CACHE_TTL) {
+    releases = cached.releases;
+  } else {
+    try {
+      const res = await fetch("https://api.github.com/repos/robinersd/Alarmates_v1/releases", {
+        headers: { "Accept": "application/vnd.github+json" },
+        cache: "no-store"
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          releases = data.map(rel => ({
+            tag_name: rel.tag_name,
+            draft: rel.draft,
+            assets: (rel.assets || []).map(a => ({
+              name: a.name, size: a.size, download_count: a.download_count, browser_download_url: a.browser_download_url
+            }))
+          }));
+          try { localStorage.setItem(CACHE_KEY, JSON.stringify({ savedAt: Date.now(), releases })); } catch {}
+        }
+      }
+    } catch {}
+    if (!releases && cached) releases = cached.releases; // rate-limited or offline: use last known data
+  }
+  if (!Array.isArray(releases)) return;
+
   try {
-    const res = await fetch("https://api.github.com/repos/robinersd/Alarmates_v1/releases", {
-      headers: { "Accept": "application/vnd.github+json" },
-      cache: "no-store"
-    });
-    if (!res.ok) return;
-    const releases = await res.json();
-    if (!Array.isArray(releases)) return;
     let total = 0;
     let latestApkUrl = "";
     let latestVersion = "";
@@ -469,7 +502,7 @@ async function syncGitHubReleaseDownloads() {
           total += Number(asset.download_count || 0);
           if (!latestApkUrl && asset.browser_download_url) {
             latestApkUrl = asset.browser_download_url;
-            latestVersion = rel.tag_name || currentServerStats.apkVersion || "v1.1";
+            latestVersion = rel.tag_name || currentServerStats.apkVersion || "v1.3";
             if (asset.size) {
               latestSizeMb = `${(Number(asset.size) / (1024 * 1024)).toFixed(1)} MB`;
             }
@@ -489,6 +522,7 @@ async function syncGitHubReleaseDownloads() {
     if (latestApkUrl) nextPatch.githubApkUrl = latestApkUrl;
     if (latestVersion) nextPatch.apkVersion = latestVersion;
     if (latestSizeMb) nextPatch.apkSizeMb = latestSizeMb;
+    if (latestApkUrl) githubLatestPatch = { githubApkUrl: latestApkUrl, apkVersion: nextPatch.apkVersion, apkSizeMb: nextPatch.apkSizeMb || currentServerStats.apkSizeMb };
     if (Object.keys(nextPatch).length > 0) {
       updateStatsUI(nextPatch, total > prevDisplayed);
     }
@@ -496,7 +530,7 @@ async function syncGitHubReleaseDownloads() {
 }
 
 async function triggerApkDownload(source = "web") {
-  const url = currentServerStats.githubApkUrl || "https://github.com/robinersd/Alarmates_v1/releases/download/v1.1/AlarMates-1.1-release.apk";
+  const url = currentServerStats.githubApkUrl || "https://github.com/robinersd/Alarmates_v1/releases/download/v1.3/AlarMates-1.3-release.apk";
   const fileName = url.split("/").pop() || "AlarMates-release.apk";
   localOptimisticIncrements += 1;
   updateStatsUI({ totalDownloads: Math.max((currentServerStats.totalDownloads || 0) + 1, githubReleaseDownloads + localOptimisticIncrements) }, true);
@@ -517,7 +551,7 @@ async function triggerApkDownload(source = "web") {
   a.click();
   a.remove();
 
-  setTimeout(syncGitHubReleaseDownloads, 4000);
+  setTimeout(() => syncGitHubReleaseDownloads(true), 4000);
 }
 
 document.getElementById("directApkDownloadBtn")?.addEventListener("click", () => triggerApkDownload("desktop"));
@@ -549,7 +583,7 @@ if (isMobileUA) {
 // Connect to Real-Time Server-Sent Events (/api/events) & Permanent GitHub Release Counter
 updateStatsUI(currentServerStats, false);
 syncGitHubReleaseDownloads();
-setInterval(syncGitHubReleaseDownloads, 30000);
+setInterval(syncGitHubReleaseDownloads, 5 * 60 * 1000);
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) syncGitHubReleaseDownloads();
 });

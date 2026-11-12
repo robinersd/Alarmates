@@ -50,9 +50,9 @@ function loadDb() {
     totalDownloads: 12,
     mobileDownloads: 12,
     desktopDownloads: 0,
-    apkVersion: "v1.1",
+    apkVersion: "v1.3",
     apkSizeMb: "80.2 MB",
-    githubApkUrl: "https://github.com/robinersd/Alarmates_v1/releases/download/v1.1/AlarMates-1.1-release.apk",
+    githubApkUrl: "https://github.com/robinersd/Alarmates_v1/releases/download/v1.3/AlarMates-1.3-release.apk",
     publicTunnelUrl: "",
     recentEvents: []
   };
@@ -405,7 +405,7 @@ server.listen(PORT, () => {
   console.log(`  Network: http://${lanIp}:${PORT}`);
 
   syncGitHubReleasesCount();
-  setInterval(syncGitHubReleasesCount, 60000);
+  setInterval(syncGitHubReleasesCount, 10 * 60 * 1000); // stay under GitHub 60 req/hour limit
 
   // Skip local SSH tunnel when running in cloud environments (Render, Vercel, Railway)
   const isCloud = Boolean(process.env.RENDER || process.env.VERCEL || process.env.NODE_ENV === "production");
