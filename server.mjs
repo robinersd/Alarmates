@@ -79,17 +79,46 @@ async function syncGitHubReleasesCount() {
     const releases = await res.json();
     if (!Array.isArray(releases)) return;
     let ghTotal = 0;
+    let latestApkUrl = "";
+    let latestVersion = "";
+    let latestSizeMb = "";
     for (const rel of releases) {
+      if (rel.draft) continue;
       if (Array.isArray(rel.assets)) {
         for (const asset of rel.assets) {
-          if (typeof asset.download_count === "number") {
-            ghTotal += asset.download_count;
+          if (asset.name && asset.name.toLowerCase().endsWith(".apk")) {
+            if (typeof asset.download_count === "number") {
+              ghTotal += asset.download_count;
+            }
+            if (!latestApkUrl && asset.browser_download_url) {
+              latestApkUrl = asset.browser_download_url;
+              latestVersion = rel.tag_name || db.apkVersion;
+              if (asset.size) {
+                latestSizeMb = `${(Number(asset.size) / (1024 * 1024)).toFixed(1)} MB`;
+              }
+            }
           }
         }
       }
     }
+    let changed = false;
     if (ghTotal > (db.totalDownloads || 0)) {
       db.totalDownloads = ghTotal;
+      changed = true;
+    }
+    if (latestApkUrl && db.githubApkUrl !== latestApkUrl) {
+      db.githubApkUrl = latestApkUrl;
+      changed = true;
+    }
+    if (latestVersion && db.apkVersion !== latestVersion) {
+      db.apkVersion = latestVersion;
+      changed = true;
+    }
+    if (latestSizeMb && db.apkSizeMb !== latestSizeMb) {
+      db.apkSizeMb = latestSizeMb;
+      changed = true;
+    }
+    if (changed) {
       saveDb(db);
       broadcastStats();
     }
