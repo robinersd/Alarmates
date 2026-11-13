@@ -47,7 +47,7 @@ function loadDb() {
     }
   }
   const initial = {
-    totalDownloads: 12,
+    totalDownloads: 21,
     mobileDownloads: 12,
     desktopDownloads: 0,
     apkVersion: "v1.4",

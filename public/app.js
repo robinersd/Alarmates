@@ -339,7 +339,9 @@ const apkVersionBadge = document.getElementById("apkVersionBadge");
 const mobileSizeBadge = document.getElementById("mobileSizeBadge");
 const githubStatusLabel = document.getElementById("githubStatusLabel");
 
-let githubReleaseDownloads = 12;
+const HW_KEY = "am_download_high_water";
+// Counter only goes up: remember the highest total this browser has seen (GitHub API can be rate-limited, Render restarts reset server data)
+let githubReleaseDownloads = Math.max(21, Number((() => { try { return localStorage.getItem(HW_KEY); } catch { return 0; } })()) || 0);
 let localOptimisticIncrements = 0;
 
 let currentServerStats = {
@@ -425,6 +427,7 @@ function updateStatsUI(data, isLiveIncrement = false) {
     githubReleaseDownloads + localOptimisticIncrements
   );
   currentServerStats.totalDownloads = combinedTotal;
+  try { if (combinedTotal > Number(localStorage.getItem(HW_KEY) || 0)) localStorage.setItem(HW_KEY, String(combinedTotal)); } catch {}
   const hasOfficialApk = Boolean(currentServerStats.githubApkUrl && currentServerStats.githubApkUrl.startsWith("http"));
   const displayedTotal = hasOfficialApk ? combinedTotal : 0;
 
@@ -513,7 +516,7 @@ async function syncGitHubReleaseDownloads(force = false) {
     const prevDisplayed = currentServerStats.totalDownloads || 0;
     const nextPatch = {};
     if (total > 0) {
-      githubReleaseDownloads = total;
+      githubReleaseDownloads = Math.max(githubReleaseDownloads, total);
       if (githubReleaseDownloads >= prevDisplayed) {
         localOptimisticIncrements = 0;
       }
