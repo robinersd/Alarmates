@@ -590,14 +590,24 @@ setInterval(syncGitHubReleaseDownloads, 5 * 60 * 1000);
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) syncGitHubReleaseDownloads();
 });
+// Connect to Live Real-Time Events (Render Backend or via Cross-Origin on Pages/GitHub)
 try {
-  const evtSource = new EventSource("/api/events");
+  const backendBase = (window.location.hostname.includes("pages.dev") || window.location.hostname.includes("github.io"))
+    ? "https://alarmates.onrender.com"
+    : "";
+  const evtSource = new EventSource(backendBase + "/api/events");
   evtSource.onmessage = (e) => {
     try {
       const payload = JSON.parse(e.data);
       updateStatsUI(payload, payload.type === "stats_update" && Boolean(payload.lastEvent));
     } catch {}
   };
+  if (backendBase) {
+    fetch(backendBase + "/api/stats")
+      .then(r => r.json())
+      .then(data => { if (data && data.totalDownloads) updateStatsUI(data, false); })
+      .catch(() => {});
+  }
 } catch {}
 
 // Save GitHub APK Settings Form
